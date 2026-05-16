@@ -35,6 +35,13 @@ RUN git clone --depth 1 --branch "${WHISPER_CPP_REF}" \
 # GGML_HIP=ON selects the HIP/ROCm backend. AMDGPU_TARGETS pins the
 # GPU arch so the kernels are built for the card we run on. ROCm lives
 # at /opt/rocm; point CMake/HIP at it explicitly.
+#
+# Build ALL default targets (no --target filter): `cmake --install`
+# installs every example that has an install() rule (whisper-cli,
+# whisper-server, whisper-bench, …), so a narrowed build makes install
+# fail on the first unbuilt one (whisper-bench: "No such file"). The
+# SDL-dependent examples are gated off (WHISPER_SDL2=OFF) so the
+# default set needs no extra deps.
 ENV ROCM_PATH=/opt/rocm
 ENV PATH=/opt/rocm/bin:${PATH}
 RUN cmake -S . -B build \
@@ -44,7 +51,6 @@ RUN cmake -S . -B build \
       -DCMAKE_HIP_ARCHITECTURES="${GPU_TARGETS}" \
       -DWHISPER_BUILD_SERVER=ON \
  && cmake --build build --config Release -j"$(nproc)" \
-      --target whisper-server whisper-cli \
  && cmake --install build --prefix /opt/whisper
 
 # ---------------------------------------------------------------------------
