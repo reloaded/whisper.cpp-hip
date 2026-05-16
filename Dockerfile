@@ -54,15 +54,16 @@ RUN cmake -S . -B build \
  && cmake --install build --prefix /opt/whisper
 
 # ---------------------------------------------------------------------------
-# Runtime — must carry the ROCm math libs whisper.cpp's HIP backend
-# links (libhipblas, librocblas, …). The plain `rocm/dev-ubuntu-22.04`
-# tag ships only the core HIP runtime, NOT hipBLAS, so whisper-server
-# died with `libhipblas.so.2: cannot open shared object file`. The
-# `-complete` tag includes the full ROCm runtime/libraries. It is
-# larger, but correctness wins; trimming to just the needed rocm-*
-# runtime packages is a future size optimization.
+# Runtime — the non-`complete` base (core HIP runtime + the ROCm apt
+# repo, ~1 GB) PLUS exactly the math libs whisper.cpp's HIP backend
+# links, installed from that repo: rocblas + hipblas (libhipblas.so.2
+# / librocblas.so) and their deps. This is the slim correct middle
+# ground between the bare runtime tag (missing hipBLAS — whisper-server
+# crashed) and the full `-complete` SDK (correct but ~5.5 GB
+# compressed, the entire dev toolchain as a runtime base). Verified
+# GPU-working on gfx1100 with this set.
 # ---------------------------------------------------------------------------
-FROM rocm/dev-ubuntu-22.04:${ROCM_VERSION}-complete AS runtime
+FROM rocm/dev-ubuntu-22.04:${ROCM_VERSION} AS runtime
 
 ARG ROCM_VERSION
 ARG WHISPER_CPP_REF
@@ -75,9 +76,14 @@ LABEL org.opencontainers.image.source="https://github.com/reloaded/whisper.cpp-h
       io.whisper-cpp-hip.whisper-cpp-ref="${WHISPER_CPP_REF}" \
       io.whisper-cpp-hip.gpu-targets="${GPU_TARGETS}"
 
+# ca-certificates for HTTPS model fetches; rocblas + hipblas are the
+# ROCm math runtime libs whisper.cpp's GGML_HIP backend dlopen-links
+# (the build is HIP-only, so this is the whole runtime ROCm surface).
+# Installed from the ROCm apt repo already configured in this base.
 # hadolint ignore=DL3008
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates rocblas hipblas \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --create-home --uid 10001 whisper
 
