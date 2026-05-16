@@ -83,11 +83,14 @@ CI layers (see `.github/workflows/`):
 - **`ci`** — every PR/push: hadolint + shellcheck + a no-execution
   BuildKit `--check` (fast).
 - **`build`** — the real ROCm/HIP compile **without** publishing.
-  Runs on `workflow_dispatch` (manual, with optional `ROCM_VERSION` /
-  `WHISPER_CPP_REF` / `GPU_TARGETS` overrides) and automatically on any
-  PR/push that changes the `Dockerfile` (or build workflow). This
-  proves the image builds in CI without cutting a release.
-- **`release`** — on a `v*` tag only: build **and push** to GHCR.
+  Runs on **every PR** (proves the PR's changes compile), on push to
+  `main`, and on `workflow_dispatch` against **any branch**
+  (`gh workflow run build.yml --ref <branch>`, with optional
+  `ROCM_VERSION` / `WHISPER_CPP_REF` / `GPU_TARGETS` overrides). Never
+  pushes an image.
+- **`release`** — on a `v*` tag **only**: build **and push** to GHCR.
+  This is the sole path that publishes a container image; PR/branch
+  builds never upload to GHCR.
 
 ## Contributing
 

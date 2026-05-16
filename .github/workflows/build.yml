@@ -1,14 +1,16 @@
 name: build
 
-# Real ROCm/HIP image build WITHOUT publishing — proves the Dockerfile
-# actually compiles in CI without needing to cut a release tag.
+# Real ROCm/HIP image build WITHOUT publishing — proves the image
+# actually compiles in CI. The GHCR push happens ONLY on a version tag
+# (release.yml); this workflow never publishes.
 #
 # Triggers:
-#   - workflow_dispatch: build on demand (optionally override the pins).
-#   - pull_request / push to main: only when a build input changes
-#     (Dockerfile / .dockerignore / this workflow). Lint stays on every
-#     PR via ci.yml; the heavy ROCm compile runs only when it can
-#     actually be affected.
+#   - workflow_dispatch: build on demand against ANY branch
+#     (`gh workflow run build.yml --ref <branch>`), optionally
+#     overriding the pinned ARGs.
+#   - pull_request: EVERY PR runs the full build (push:false) so a PR's
+#     changes are proven to compile before merge.
+#   - push to main: post-merge sanity build of main.
 on:
   workflow_dispatch:
     inputs:
@@ -25,16 +27,8 @@ on:
         required: false
         default: ""
   pull_request:
-    paths:
-      - Dockerfile
-      - .dockerignore
-      - .github/workflows/build.yml
   push:
     branches: [main]
-    paths:
-      - Dockerfile
-      - .dockerignore
-      - .github/workflows/build.yml
 
 permissions:
   contents: read
