@@ -78,8 +78,16 @@ image. There are no manual image pushes.
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-PR CI is lint-only (hadolint + shellcheck + a no-execution BuildKit
-`--check`); the full ROCm compile runs only on a tag.
+CI layers (see `.github/workflows/`):
+
+- **`ci`** — every PR/push: hadolint + shellcheck + a no-execution
+  BuildKit `--check` (fast).
+- **`build`** — the real ROCm/HIP compile **without** publishing.
+  Runs on `workflow_dispatch` (manual, with optional `ROCM_VERSION` /
+  `WHISPER_CPP_REF` / `GPU_TARGETS` overrides) and automatically on any
+  PR/push that changes the `Dockerfile` (or build workflow). This
+  proves the image builds in CI without cutting a release.
+- **`release`** — on a `v*` tag only: build **and push** to GHCR.
 
 ## Contributing
 

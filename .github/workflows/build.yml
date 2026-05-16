@@ -1,0 +1,77 @@
+name: build
+
+# Real ROCm/HIP image build WITHOUT publishing — proves the Dockerfile
+# actually compiles in CI without needing to cut a release tag.
+#
+# Triggers:
+#   - workflow_dispatch: build on demand (optionally override the pins).
+#   - pull_request / push to main: only when a build input changes
+#     (Dockerfile / .dockerignore / this workflow). Lint stays on every
+#     PR via ci.yml; the heavy ROCm compile runs only when it can
+#     actually be affected.
+on:
+  workflow_dispatch:
+    inputs:
+      rocm_version:
+        description: "ROCm version (overrides Dockerfile ARG default)"
+        required: false
+        default: ""
+      whisper_cpp_ref:
+        description: "whisper.cpp git ref (overrides Dockerfile ARG default)"
+        required: false
+        default: ""
+      gpu_targets:
+        description: "AMDGPU target(s), e.g. gfx1100"
+        required: false
+        default: ""
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/build.yml
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/build.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Only forward a build-arg when the dispatch input is non-empty,
+      # so the Dockerfile's pinned ARG defaults stay the source of
+      # truth for PR/push builds.
+      - name: Assemble build args
+        id: args
+        run: |
+          {
+            [ -n "${{ inputs.rocm_version }}" ]    && echo "ROCM_VERSION=${{ inputs.rocm_version }}"
+            [ -n "${{ inputs.whisper_cpp_ref }}" ] && echo "WHISPER_CPP_REF=${{ inputs.whisper_cpp_ref }}"
+            [ -n "${{ inputs.gpu_targets }}" ]     && echo "GPU_TARGETS=${{ inputs.gpu_targets }}"
+            true
+          } > /tmp/bargs
+          {
+            echo 'build-args<<EOF'
+            cat /tmp/bargs
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build image (linux/amd64, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          build-args: ${{ steps.args.outputs.build-args }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
