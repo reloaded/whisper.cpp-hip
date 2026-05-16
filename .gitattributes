@@ -1,0 +1,19 @@
+# Normalize line endings: text auto-detected, LF in the repo.
+* text=auto eol=lf
+
+# Explicitly text (LF) — build + CI inputs that must not get CRLF.
+Dockerfile        text eol=lf
+*.sh              text eol=lf
+*.yml             text eol=lf
+*.yaml            text eol=lf
+*.json            text eol=lf
+*.md              text eol=lf
+
+# Treat model/audio/binary artifacts as binary if they ever appear.
+*.bin   binary
+*.gguf  binary
+*.ggml  binary
+*.wav   binary
+*.mp3   binary
+*.flac  binary
+*.png   binary
