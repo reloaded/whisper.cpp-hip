@@ -18,7 +18,10 @@ sudo curl -fsSL \
   -o /usr/local/bin/hadolint
 sudo chmod +x /usr/local/bin/hadolint
 
-# shellcheck — shell-script linter (CI helper scripts).
+# Install the shell-script linter used by CI (note: this comment must
+# NOT begin with the literal token that follows "# " + the linter's
+# name — a comment starting with that token is parsed as a linter
+# directive, SC1072/SC1073, and fails the run).
 sudo apt-get update -y
 sudo apt-get install -y --no-install-recommends shellcheck
 sudo rm -rf /var/lib/apt/lists/*
