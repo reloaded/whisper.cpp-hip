@@ -1,0 +1,4 @@
+# The image build needs only the Dockerfile; whisper.cpp is cloned
+# inside the build at a pinned ref. Keep the context tiny.
+*
+!Dockerfile
