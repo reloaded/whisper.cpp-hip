@@ -56,7 +56,7 @@ ARG ROCM_VERSION
 ARG WHISPER_CPP_REF
 ARG GPU_TARGETS
 
-LABEL org.opencontainers.image.source="https://github.com/reloaded/-whisper.cpp-hip" \
+LABEL org.opencontainers.image.source="https://github.com/reloaded/whisper.cpp-hip" \
       org.opencontainers.image.description="whisper.cpp (ROCm/HIP, GGML_HIP=ON) for AMD GPUs" \
       org.opencontainers.image.licenses="MIT" \
       io.whisper-cpp-hip.rocm-version="${ROCM_VERSION}" \
