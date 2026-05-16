@@ -1,0 +1,47 @@
+name: ci
+
+# PR gate: lint only. A full ROCm compile is heavy and needs no GPU to
+# validate correctness of the Dockerfile/CI surface — the real build
+# runs on a version tag (see release.yml). Keeping PR CI to lint keeps
+# the feedback loop fast.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: hadolint (Dockerfile)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: shellcheck (scripts)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends shellcheck
+          # Lint every tracked shell script; no-op cleanly if none.
+          mapfile -t scripts < <(git ls-files '*.sh')
+          if [ ${#scripts[@]} -gt 0 ]; then
+            shellcheck "${scripts[@]}"
+          else
+            echo "no shell scripts to lint"
+          fi
+
+      - name: Dockerfile check (BuildKit lint — no build steps run)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # `--check` runs BuildKit's frontend lint/validation only; it
+          # does NOT execute build steps, so there is no multi-GB ROCm
+          # pull and no compile. The full image is built on a version
+          # tag (release.yml).
+          call: check
