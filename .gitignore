@@ -1,0 +1,32 @@
+# Build / scratch
+/build/
+/dist/
+*.log
+*.tmp
+
+# Model + audio artifacts (never vendored — fetched at build/run time)
+*.bin
+*.gguf
+*.ggml
+*.wav
+*.mp3
+*.flac
+models/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Git worktrees created per the CLAUDE.md workflow (kept out of the
+# tree; they are local-only and live as siblings, but ignore any that
+# land here by accident)
+/wt-*/
