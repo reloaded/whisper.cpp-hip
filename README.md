@@ -60,7 +60,7 @@ are pinned `--build-arg`s (see the `Dockerfile` for current defaults):
 ```bash
 docker buildx build \
   --build-arg ROCM_VERSION=6.2.4 \
-  --build-arg WHISPER_CPP_REF=v1.7.4 \
+  --build-arg WHISPER_CPP_REF=v1.8.4 \
   --build-arg GPU_TARGETS=gfx1100 \
   -t whisper-cpp-hip:dev .
 ```

@@ -19,7 +19,7 @@ ARG ROCM_VERSION=6.2.4
 # ---------------------------------------------------------------------------
 FROM rocm/dev-ubuntu-22.04:${ROCM_VERSION}-complete AS builder
 
-ARG WHISPER_CPP_REF=v1.7.4
+ARG WHISPER_CPP_REF=v1.8.4
 ARG GPU_TARGETS=gfx1100
 
 # hadolint ignore=DL3008
@@ -71,7 +71,12 @@ RUN apt-get update \
 
 COPY --from=builder /opt/whisper /opt/whisper
 
+# whisper-server/-cli have install(TARGETS … RUNTIME) rules and
+# `install(TARGETS whisper LIBRARY …)` installs libwhisper; both land
+# under the /opt/whisper prefix. Put its lib dir on the loader path so
+# the shared libs resolve at runtime (ROCm libs come from the base).
 ENV PATH=/opt/whisper/bin:/opt/rocm/bin:${PATH}
+ENV LD_LIBRARY_PATH=/opt/whisper/lib:/opt/whisper/lib64:/opt/rocm/lib
 
 # Models are large and license/use-specific: never baked in. Mount or
 # download into /models at run time.
