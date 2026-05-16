@@ -54,9 +54,15 @@ RUN cmake -S . -B build \
  && cmake --install build --prefix /opt/whisper
 
 # ---------------------------------------------------------------------------
-# Runtime — ROCm runtime libs only (no -complete dev toolchain).
+# Runtime — must carry the ROCm math libs whisper.cpp's HIP backend
+# links (libhipblas, librocblas, …). The plain `rocm/dev-ubuntu-22.04`
+# tag ships only the core HIP runtime, NOT hipBLAS, so whisper-server
+# died with `libhipblas.so.2: cannot open shared object file`. The
+# `-complete` tag includes the full ROCm runtime/libraries. It is
+# larger, but correctness wins; trimming to just the needed rocm-*
+# runtime packages is a future size optimization.
 # ---------------------------------------------------------------------------
-FROM rocm/dev-ubuntu-22.04:${ROCM_VERSION} AS runtime
+FROM rocm/dev-ubuntu-22.04:${ROCM_VERSION}-complete AS runtime
 
 ARG ROCM_VERSION
 ARG WHISPER_CPP_REF
